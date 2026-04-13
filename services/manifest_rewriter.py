@@ -281,17 +281,23 @@ class ManifestRewriter:
                         line[:uri_start] + proxy_media_url + line[uri_end:]
                     )
 
-                rewritten_lines.append("#EXTM3U")
+                # Aggiungi i tag globali (es. #EXT-X-VERSION) ma filtra quelli che riscriveremo
                 for line in lines:
-                    if line.startswith("#EXT-X-MEDIA:") or line.startswith(
-                        "#EXT-X-STREAM-INF:"
-                    ) or (line and not line.startswith("#")):
+                    line = line.strip()
+                    if not line or line == "#EXTM3U":
                         continue
+                    if line.startswith("#EXT-X-MEDIA:") or line.startswith("#EXT-X-STREAM-INF:") or not line.startswith("#"):
+                        continue
+                    rewritten_lines.append(line)
 
+                # Aggiunge i media proxati (sottotitoli, audio) e lo stream scelto
                 rewritten_lines.extend(proxied_media_lines)
                 rewritten_lines.append(highest_quality_stream["inf"])
                 rewritten_lines.append(proxied_stream_url)
-                return "\n".join(rewritten_lines)
+                
+                # Assicura che inizi con #EXTM3U
+                final_content = "#EXTM3U\n" + "\n".join(rewritten_lines)
+                return final_content
 
         # --- Logica Standard ---
         header_params = "".join(
